@@ -5,8 +5,8 @@
 * Change function to graph in the code at line 120
 
 ## Controls :
-* - : Zoom out
-* + : Zoom in
+* \- : Zoom out
+* \+ : Zoom in
 * Left Arrow : Scroll left
 * Right Arrow : Scroll right
 * Up Arrow : Scroll up
