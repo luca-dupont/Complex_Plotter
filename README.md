@@ -2,7 +2,7 @@
 
 ## How to use :
 * Run `cargo run --release` in the terminal while in the Complex_Plotter directory.
-* Change function in the code at line 120
+* Change function to graph in the code at line 120
 
 ## Controls :
 * - : Zoom out
