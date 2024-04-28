@@ -3,17 +3,23 @@ use macroquad::prelude::*;
 use num_complex::Complex;
 use std::f64::consts::PI;
 
-const WIDTH: f32 = 750.0;
-const HEIGHT: f32 = 750.0;
+// ! Example func : z^3 - 1
 
-const W_OS_FACTOR: f32 = 2.0;
+const WIDTH: f32 = 750.;
+const HEIGHT: f32 = 750.;
+
+const ALPHA: f32 = 0.7;
+
+const W_OS_FACTOR: f32 = 2.;
 const H_OS_FACTOR: f32 = 1.925;
 
+const START_BOUNDARIES: f32 = 10.;
+
 fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32) -> f32 {
-    // First, normalize the value to the range [0, 1]
+    // Normalize value to the range [0, 1]
     let normalized_value = (value - from_min) / (from_max - from_min);
 
-    // Then, scale the normalized value to the new range
+    // Scale normalized value to the new range
     normalized_value * (to_max - to_min) + to_min
 }
 
@@ -22,37 +28,31 @@ fn angle_to_rgb(hue: f32) -> (f32, f32, f32) {
     let x = chroma * (1.0 - ((hue / 60.0) % 2.0 - 1.0).abs());
     let m = 1.0 - chroma / 2.0;
 
-    let (r, g, b) = if hue < 60.0 {
-        (chroma, x, 0.0)
-    } else if hue < 120.0 {
-        (x, chroma, 0.0)
-    } else if hue < 180.0 {
-        (0.0, chroma, x)
-    } else if hue < 240.0 {
-        (0.0, x, chroma)
-    } else if hue < 300.0 {
-        (x, 0.0, chroma)
-    } else {
-        (chroma, 0.0, x)
+    let (r, g, b) = match hue {
+        _ if hue < 60.0 => (chroma, x, 0.0),
+        _ if hue < 120.0 => (x, chroma, 0.0),
+        _ if hue < 180.0 => (0.0, chroma, x),
+        _ if hue < 240.0 => (0.0, x, chroma),
+        _ if hue < 300.0 => (x, 0.0, chroma),
+        _ => (chroma, 0.0, x),
     };
 
-    let r = r + m;
-    let g = g + m;
-    let b = b + m;
-
-    (r, g, b)
+    (r + m, g + m, b + m)
 }
 
 #[macroquad::main("Complex function grapher")]
 async fn main() {
+    // Device specific resizing factor | Tweak as needed
     request_new_screen_size(WIDTH / W_OS_FACTOR, HEIGHT / H_OS_FACTOR);
 
     let mut image = Image::gen_image_color(WIDTH as u16, HEIGHT as u16, WHITE);
 
     let texture = Texture2D::from_image(&image);
 
-    let mut boundary = 100.;
+    // Initial graph boundaries
+    let mut boundary = START_BOUNDARIES;
 
+    // Graph translation offsets
     let mut x_offset = 0.;
     let mut y_offset = 0.;
 
@@ -62,34 +62,43 @@ async fn main() {
 
         clear_background(BLACK);
 
+        // Handle events
         if is_key_down(KeyCode::Equal) {
+            // Zoom in
             boundary /= 1.1;
         } else if is_key_down(KeyCode::Minus) {
+            // Zoom out
             boundary *= 1.1;
         } else if is_key_down(KeyCode::Right) {
-            x_offset += boundary / 50.;
+            // Scroll right
+            x_offset += boundary / 100.;
         } else if is_key_down(KeyCode::Left) {
-            x_offset -= boundary / 50.;
+            // Scroll left
+            x_offset -= boundary / 100.;
         } else if is_key_down(KeyCode::Down) {
-            y_offset += boundary / 50.;
+            // Scroll down
+            y_offset += boundary / 100.;
         } else if is_key_down(KeyCode::Up) {
-            y_offset -= boundary / 50.;
+            // Scroll up
+            y_offset -= boundary / 100.;
         }
 
+        // Calculate value for each pixel after function
         for x in 0..w {
             for y in 0..h {
                 let (a, b) = (
+                    // Map pixel to the graph boundaries
                     map_value(
                         x as f32,
                         0.,
-                        750.,
+                        w as f32,
                         (-boundary) + x_offset,
                         boundary + x_offset,
                     ),
                     map_value(
                         y as f32,
                         0.,
-                        750.,
+                        h as f32,
                         (-boundary) + y_offset,
                         boundary + y_offset,
                     ),
@@ -97,32 +106,60 @@ async fn main() {
 
                 let mut z = Complex::new(a, b);
 
-                z = (z * z * z) - 1.;
+                //* ↓ Implementation for Riemann Zeta function with the first 50 terms | *SLOW* ↓ */
+                // let mut z2 = Complex::new(0., 0.);
 
-                // let norm = z.norm();
+                // for i in 1..50 {
+                //     z2 += z.expf(i as f32).inv();
+                // }
 
+                // z = ((-1. / 2.) * (z * z)).exp();
+
+                // ! ↓↓ CHANGE FUNC HERE ↓↓
+                z = z * z * z - 1.;
+
+                // Map angle from radians to degrees
                 let angle = map_value(z.arg(), -PI as f32, PI as f32, 0., 360.);
 
+                // Map angle to color wheel color
                 let (r1, g1, b1) = angle_to_rgb(angle);
 
                 let color = Color {
                     r: r1,
                     g: g1,
                     b: b1,
-                    a: 0.8,
+                    a: ALPHA,
                 };
 
+                // Set according color
                 image.set_pixel(x as u32, y as u32, color);
             }
         }
 
         // Draw axes
-
         for x in 0..w {
-            image.set_pixel(x as u32, (h / 2) as u32, BLACK);
+            let y_pos = map_value(
+                0.,
+                (-boundary) + y_offset,
+                boundary + y_offset,
+                0.,
+                h as f32,
+            );
+            if y_pos < h as f32 && y_pos > 0. {
+                image.set_pixel(x as u32, y_pos as u32, BLACK);
+            }
         }
         for y in 0..h {
-            image.set_pixel((w / 2) as u32, y as u32, BLACK);
+            let x_pos = map_value(
+                0.,
+                (-boundary) + x_offset,
+                boundary + x_offset,
+                0.,
+                w as f32,
+            );
+            if x_pos < w as f32 && x_pos > 0. {
+                image.set_pixel(x_pos as u32, y as u32, BLACK);
+            }
         }
 
         texture.update(&image);
