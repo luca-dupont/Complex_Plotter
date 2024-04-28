@@ -53,28 +53,51 @@ async fn main() {
 
     let mut boundary = 100.;
 
+    let mut x_offset = 0.;
+    let mut y_offset = 0.;
+
     loop {
         let w = image.width();
         let h = image.height();
 
         clear_background(BLACK);
 
-        if is_key_down(KeyCode::Up) {
+        if is_key_down(KeyCode::Equal) {
             boundary /= 1.1;
-        } else if is_key_down(KeyCode::Down) {
+        } else if is_key_down(KeyCode::Minus) {
             boundary *= 1.1;
+        } else if is_key_down(KeyCode::Right) {
+            x_offset += boundary / 50.;
+        } else if is_key_down(KeyCode::Left) {
+            x_offset -= boundary / 50.;
+        } else if is_key_down(KeyCode::Down) {
+            y_offset += boundary / 50.;
+        } else if is_key_down(KeyCode::Up) {
+            y_offset -= boundary / 50.;
         }
 
         for x in 0..w {
             for y in 0..h {
                 let (a, b) = (
-                    map_value(x as f32, 0., 750., -boundary, boundary),
-                    map_value(y as f32, 0., 750., -boundary, boundary),
+                    map_value(
+                        x as f32,
+                        0.,
+                        750.,
+                        (-boundary) + x_offset,
+                        boundary + x_offset,
+                    ),
+                    map_value(
+                        y as f32,
+                        0.,
+                        750.,
+                        (-boundary) + y_offset,
+                        boundary + y_offset,
+                    ),
                 );
 
                 let mut z = Complex::new(a, b);
 
-                z = z * z - 1.;
+                z = (z * z * z) - 1.;
 
                 // let norm = z.norm();
 
