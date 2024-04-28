@@ -7,7 +7,7 @@
 ## Controls :
 * \- : Zoom out
 * \+ : Zoom in
-* Left Arrow : Scroll left
-* Right Arrow : Scroll right
-* Up Arrow : Scroll up
-* Down Arrow : Scroll down 
+* ← : Scroll left
+* → : Scroll right
+* ↑ : Scroll up
+* ↓ : Scroll down 
