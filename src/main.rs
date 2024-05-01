@@ -66,19 +66,19 @@ async fn main() {
         if is_key_down(KeyCode::Equal) {
             // Zoom in
             boundary /= 1.1;
-        } else if is_key_down(KeyCode::Minus) {
+        } if is_key_down(KeyCode::Minus) {
             // Zoom out
             boundary *= 1.1;
-        } else if is_key_down(KeyCode::Right) {
+        } if is_key_down(KeyCode::Right) {
             // Scroll right
             x_offset += boundary / 100.;
-        } else if is_key_down(KeyCode::Left) {
+        } if is_key_down(KeyCode::Left) {
             // Scroll left
             x_offset -= boundary / 100.;
-        } else if is_key_down(KeyCode::Down) {
+        } if is_key_down(KeyCode::Down) {
             // Scroll down
             y_offset += boundary / 100.;
-        } else if is_key_down(KeyCode::Up) {
+        } if is_key_down(KeyCode::Up) {
             // Scroll up
             y_offset -= boundary / 100.;
         }
