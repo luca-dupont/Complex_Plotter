@@ -3,10 +3,14 @@ use macroquad::prelude::*;
 use num_complex::Complex;
 use std::f64::consts::PI;
 
-// ! Example func : z^3 - 1
+// ! Example func : e^(-1/2(z^2))
+// ! Change at line 128
 
 const WIDTH: f32 = 750.;
 const HEIGHT: f32 = 750.;
+
+const ZOOM_FACTOR: f32 = 1.1;
+const SCROLL_FACTOR: f32 = 50.;
 
 const ALPHA: f32 = 0.7;
 
@@ -65,22 +69,27 @@ async fn main() {
         // Handle events
         if is_key_down(KeyCode::Equal) {
             // Zoom in
-            boundary /= 1.1;
-        } if is_key_down(KeyCode::Minus) {
+            boundary /= ZOOM_FACTOR;
+        }
+        if is_key_down(KeyCode::Minus) {
             // Zoom out
-            boundary *= 1.1;
-        } if is_key_down(KeyCode::Right) {
+            boundary *= ZOOM_FACTOR;
+        }
+        if is_key_down(KeyCode::Right) {
             // Scroll right
-            x_offset += boundary / 100.;
-        } if is_key_down(KeyCode::Left) {
+            x_offset += boundary / SCROLL_FACTOR;
+        }
+        if is_key_down(KeyCode::Left) {
             // Scroll left
-            x_offset -= boundary / 100.;
-        } if is_key_down(KeyCode::Down) {
+            x_offset -= boundary / SCROLL_FACTOR;
+        }
+        if is_key_down(KeyCode::Down) {
             // Scroll down
-            y_offset += boundary / 100.;
-        } if is_key_down(KeyCode::Up) {
+            y_offset += boundary / SCROLL_FACTOR;
+        }
+        if is_key_down(KeyCode::Up) {
             // Scroll up
-            y_offset -= boundary / 100.;
+            y_offset -= boundary / SCROLL_FACTOR;
         }
 
         // Calculate value for each pixel after function
@@ -106,17 +115,17 @@ async fn main() {
 
                 let mut z = Complex::new(a, b);
 
-                //* ↓ Implementation for Riemann Zeta function with the first 50 terms | *SLOW* ↓ */
+                // //* ↓ Implementation for Riemann Zeta function with the first 50 terms | *SLOW* ↓ */
                 // let mut z2 = Complex::new(0., 0.);
 
                 // for i in 1..50 {
                 //     z2 += z.expf(i as f32).inv();
                 // }
 
-                // z = ((-1. / 2.) * (z * z)).exp();
+                // z = z2;
 
                 // ! ↓↓ CHANGE FUNC HERE ↓↓
-                z = z * z * z - 1.;
+                z = ((-1. / 2.) * (z * z)).exp();
 
                 // Map angle from radians to degrees
                 let angle = map_value(z.arg(), -PI as f32, PI as f32, 0., 360.);
