@@ -1,9 +1,9 @@
 extern crate num_complex;
 use macroquad::prelude::*;
 use num_complex::Complex;
-use std::f64::consts::PI;
+use std::f32::consts::PI;
 
-// ! Example func : e^(-1/2(z^2))
+// ! Example func : z^3 - 1
 // ! Change at line 128
 
 const WIDTH: f32 = 750.;
@@ -12,7 +12,7 @@ const HEIGHT: f32 = 750.;
 const ZOOM_FACTOR: f32 = 1.1;
 const SCROLL_FACTOR: f32 = 50.;
 
-const ALPHA: f32 = 0.7;
+const R: i32 = 2;
 
 const W_OS_FACTOR: f32 = 2.;
 const H_OS_FACTOR: f32 = 1.925;
@@ -125,19 +125,28 @@ async fn main() {
                 // z = z2;
 
                 // ! ↓↓ CHANGE FUNC HERE ↓↓
-                z = ((-1. / 2.) * (z * z)).exp();
+                // z = ((-1. / 2.) * (z * z)).exp();
+                // z = z * z * z - 1.;
+                z = z / z.cos();
+                // z = z.sin() - 0.5;
 
                 // Map angle from radians to degrees
-                let angle = map_value(z.arg(), -PI as f32, PI as f32, 0., 360.);
+                let angle = map_value(z.arg(), -PI, PI, 0., 360.);
+
+                let norm = z.norm();
 
                 // Map angle to color wheel color
                 let (r1, g1, b1) = angle_to_rgb(angle);
+
+                // |z|^R/(|z|^R+1)
+                let z_r = norm.powi(R);
+                let alpha = z_r / (z_r + 1.);
 
                 let color = Color {
                     r: r1,
                     g: g1,
                     b: b1,
-                    a: ALPHA,
+                    a: alpha,
                 };
 
                 // Set according color
