@@ -3,8 +3,7 @@ use macroquad::prelude::*;
 use num_complex::Complex;
 use std::f32::consts::PI;
 
-// ! Example func : z^3 - 1
-// ! Change at line 128
+// ! Change functions at line 130 and down
 
 const WIDTH: f32 = 750.;
 const HEIGHT: f32 = 750.;
@@ -12,7 +11,8 @@ const HEIGHT: f32 = 750.;
 const ZOOM_FACTOR: f32 = 1.1;
 const SCROLL_FACTOR: f32 = 50.;
 
-const R: i32 = 2;
+const K: i32 = 2;
+const ALPHA: f32 = 1.;
 
 const W_OS_FACTOR: f32 = 2.;
 const H_OS_FACTOR: f32 = 1.925;
@@ -125,10 +125,11 @@ async fn main() {
                 // z = z2;
 
                 // ! ↓↓ CHANGE FUNC HERE ↓↓
-                // z = ((-1. / 2.) * (z * z)).exp();
+                // ↓ Sample funcs ↓
+                // z = ((-1. / 2.) * (z * z)).exp(); // e^(-1/2*z^2)
                 // z = z * z * z - 1.;
-                z = z / z.cos();
-                // z = z.sin() - 0.5;
+                z = z / z.cos(); // z/cos(z)
+                // z = z.sin() - 0.5; // sin(z) - 0.5
 
                 // Map angle from radians to degrees
                 let angle = map_value(z.arg(), -PI, PI, 0., 360.);
@@ -138,15 +139,16 @@ async fn main() {
                 // Map angle to color wheel color
                 let (r1, g1, b1) = angle_to_rgb(angle);
 
-                // |z|^R/(|z|^R+1)
-                let z_r = norm.powi(R);
-                let alpha = z_r / (z_r + 1.);
+                // Map norm to brightness
+                // |z|^K/(|z|^K+1)
+                let z_k = norm.powi(K);
+                let brightness = z_k / (z_k + 1.);
 
                 let color = Color {
-                    r: r1,
-                    g: g1,
-                    b: b1,
-                    a: alpha,
+                    r: r1 * brightness,
+                    g: g1 * brightness,
+                    b: b1 * brightness,
+                    a: ALPHA,
                 };
 
                 // Set according color
