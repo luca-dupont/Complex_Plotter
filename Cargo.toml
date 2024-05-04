@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 num-complex = "0.4"
-macroquad = "0.3"
+macroquad = "0.4.5"
