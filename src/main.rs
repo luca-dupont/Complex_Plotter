@@ -2,7 +2,7 @@ use macroquad::{color::hsl_to_rgb, miniquad::window::screen_size, prelude::*};
 use num_complex::Complex;
 use std::f32::consts::PI;
 
-// ! Change functions at lines 114 and below
+// ! Change functions at lines 112 and below
 
 // Constants
 const ZOOM_FACTOR: f32 = 1.1;
