@@ -1,22 +1,16 @@
 extern crate num_complex;
-use macroquad::prelude::*;
+use macroquad::{color::hsl_to_rgb, miniquad::window::screen_size, prelude::*};
 use num_complex::Complex;
 use std::f32::consts::PI;
 
-// ! Change functions at line 130 and down
+// ! Change functions at lines 114 and below
 
-const WIDTH: f32 = 750.;
-const HEIGHT: f32 = 750.;
-
+// Constants
 const ZOOM_FACTOR: f32 = 1.1;
 const SCROLL_FACTOR: f32 = 50.;
-
 const K: i32 = 2;
-const ALPHA: f32 = 1.;
-
-const W_OS_FACTOR: f32 = 2.;
-const H_OS_FACTOR: f32 = 1.925;
-
+const MAX_LIGHTNESS: f32 = 0.7;
+const SATURATION: f32 = 1.;
 const START_BOUNDARIES: f32 = 10.;
 
 fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32) -> f32 {
@@ -27,31 +21,15 @@ fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32)
     normalized_value * (to_max - to_min) + to_min
 }
 
-fn angle_to_rgb(hue: f32) -> (f32, f32, f32) {
-    let chroma = 1.0;
-    let x = chroma * (1.0 - ((hue / 60.0) % 2.0 - 1.0).abs());
-    let m = 1.0 - chroma / 2.0;
-
-    let (r, g, b) = match hue {
-        _ if hue < 60.0 => (chroma, x, 0.0),
-        _ if hue < 120.0 => (x, chroma, 0.0),
-        _ if hue < 180.0 => (0.0, chroma, x),
-        _ if hue < 240.0 => (0.0, x, chroma),
-        _ if hue < 300.0 => (x, 0.0, chroma),
-        _ => (chroma, 0.0, x),
-    };
-
-    (r + m, g + m, b + m)
-}
-
-#[macroquad::main("Complex function grapher")]
+#[macroquad::main("Complex function plotter")]
 async fn main() {
-    // Device specific resizing factor | Tweak as needed
-    request_new_screen_size(WIDTH / W_OS_FACTOR, HEIGHT / H_OS_FACTOR);
+    // Initialize window
+    let (width, height) = screen_size();
 
-    let mut image = Image::gen_image_color(WIDTH as u16, HEIGHT as u16, WHITE);
+    let mut image = Image::gen_image_color(width as u16, height as u16, WHITE);
+    let mut texture = Texture2D::from_image(&image);
 
-    let texture = Texture2D::from_image(&image);
+    let (mut w, mut h) = (image.width(), image.height());
 
     // Initial graph boundaries
     let mut boundary = START_BOUNDARIES;
@@ -61,8 +39,15 @@ async fn main() {
     let mut y_offset = 0.;
 
     loop {
-        let w = image.width();
-        let h = image.height();
+        // Check for window resizing
+        let (new_width, new_height) = screen_size();
+        if new_width != width || new_height != height {
+            
+            image = Image::gen_image_color(new_width as u16, new_height as u16, WHITE);
+            texture = Texture2D::from_image(&image);
+
+            (w, h) = (image.width(), image.height());
+        }
 
         clear_background(BLACK);
 
@@ -125,31 +110,21 @@ async fn main() {
                 // z = z2;
 
                 // ! ↓↓ CHANGE FUNC HERE ↓↓
-                // ↓ Sample funcs ↓
-                // z = ((-1. / 2.) * (z * z)).exp(); // e^(-1/2*z^2)
+                // z = ((-1. / 2.) * (z * z)).exp();
                 // z = z * z * z - 1.;
-                z = z / z.cos(); // z/cos(z)
-                // z = z.sin() - 0.5; // sin(z) - 0.5
+                z = z / z.cos();
+                // z = z.sin() - 0.5;
 
                 // Map angle from radians to degrees
-                let angle = map_value(z.arg(), -PI, PI, 0., 360.);
+                let hue = map_value(z.arg(), -PI, PI, 0., 1.);
 
                 let norm = z.norm();
 
-                // Map angle to color wheel color
-                let (r1, g1, b1) = angle_to_rgb(angle);
-
-                // Map norm to brightness
                 // |z|^K/(|z|^K+1)
                 let z_k = norm.powi(K);
-                let brightness = z_k / (z_k + 1.);
+                let lightness = MAX_LIGHTNESS * z_k / (z_k + 1.);
 
-                let color = Color {
-                    r: r1 * brightness,
-                    g: g1 * brightness,
-                    b: b1 * brightness,
-                    a: ALPHA,
-                };
+                let color = hsl_to_rgb(hue, SATURATION, lightness);
 
                 // Set according color
                 image.set_pixel(x as u32, y as u32, color);
@@ -184,7 +159,7 @@ async fn main() {
 
         texture.update(&image);
 
-        draw_texture(texture, 0., 0., WHITE);
+        draw_texture(&texture, 0., 0., WHITE);
 
         next_frame().await;
     }
