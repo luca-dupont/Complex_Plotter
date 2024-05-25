@@ -11,7 +11,9 @@ const K: i32 = 2;
 const MAX_LIGHTNESS: f32 = 0.7;
 const SATURATION: f32 = 1.;
 const START_BOUNDARIES: f32 = 10.;
+const TRANSPARENT_GREY: Color = Color{r : 220., g : 220., b : 220., a : 0.2};
 
+// Function to map values from one range to another
 fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32) -> f32 {
     // Normalize value to the range [0, 1]
     let normalized_value = (value - from_min) / (from_max - from_min);
@@ -20,16 +22,18 @@ fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32)
     normalized_value * (to_max - to_min) + to_min
 }
 
+// The function that will be applied to the plane
 fn f_of_z(z : Complex<f32>) -> Complex<f32> {
+    let fz = (z * z * z - 100.)/(z.powi(2)+40.);
     // fz = ((-1. / 2.) * (z * z)).exp();
-    let fz = z * z * z - 1.;
     // fz = z / z.cos();
     // fz = z.sin() - 0.5;
 
     fz
 }
 
-fn riemann_zeta(z : Complex<f32>) -> Complex<f32> {
+// A bad implementation of the Riemann Zeta function that is horribly slow, and just the 50 first terms
+fn _riemann_zeta(z : Complex<f32>) -> Complex<f32> {
     let mut fz = Complex::new(0., 0.);
 
     // 50 first terms of the sum
@@ -39,6 +43,8 @@ fn riemann_zeta(z : Complex<f32>) -> Complex<f32> {
 
     fz
 }
+
+// Main loop
 #[macroquad::main("Complex function plotter")]
 async fn main() {
     // Initialize window
@@ -66,6 +72,7 @@ async fn main() {
             (w, h) = (image.width(), image.height());
         }
 
+        // Reset background
         clear_background(BLACK);
 
         // Handle events
@@ -115,19 +122,19 @@ async fn main() {
                     ),
                 );
 
-                let mut z = Complex::new(a, b);
-
-                z = f_of_z(z);
+                let z = Complex::new(a, b);
+                let f_of_z = f_of_z(z);
 
                 // Map angle from radians to degrees
-                let hue = map_value(z.arg(), -PI, PI, 0., 1.);
+                let hue = map_value(f_of_z.arg(), -PI, PI, 0., 1.);
 
-                let norm = z.norm();
+                let norm = f_of_z.norm();
 
-                // |z|^K/(|z|^K+1)
+                // |f(z)|^K/(|f(z)|^K+1)
                 let z_k = norm.powi(K);
                 let lightness = MAX_LIGHTNESS * z_k / (z_k + 1.);
 
+                // Map angle and norm to color
                 let color = hsl_to_rgb(hue, SATURATION, lightness);
 
                 // Set according color
@@ -135,6 +142,7 @@ async fn main() {
             }
         }
 
+        // Draw result on screen
         texture.update(&image);
 
         draw_texture(&texture, 0., 0., WHITE);
@@ -157,24 +165,26 @@ async fn main() {
         draw_line(x_axe_pos, 0., x_axe_pos, h as f32, 1., BLACK);
         draw_line(0., y_axe_pos, w as f32, y_axe_pos, 1., BLACK);
 
-        // Get point value
+        // Get point value at current mouse position
         let (mut mx, mut my) = mouse_position();
 
+        // Map mouse position to graph range
         mx = map_value(mx, 0., w as f32, -boundary + x_offset, boundary + x_offset);
         my = map_value(my, 0., h as f32, -boundary + y_offset, boundary + y_offset);
 
-        let mut z = Complex::new(mx,my);
+        let mz = Complex::new(mx,my);
+        let f_of_mz = f_of_z(mz);
 
-        z = f_of_z(z);
+        // Get the real and imaginary component of the result
+        let (re, im) = (f_of_mz.re, f_of_mz.im);
 
-        let (re, im) = (z.re, z.im);
+        // Draw text with z and f(z) of the current mouse position
+        let mz_text = &format!("z = {mx:.3} + {my:.3}i");
+        let f_of_mz_text = &format!("f(z) = {re:.3} + {im:.3}i");
 
-        let z_text = &format!("z = {mx:.3} + {my:.3}i");
-        let fz_text = &format!("f(z) = {re:.3} + {im:.3}i");
-
-
-        draw_text(z_text, 10., 30., 30., BLACK);
-        draw_text(fz_text, 10., 60., 30., BLACK);
+        draw_rectangle(0.,0.,330., 75., TRANSPARENT_GREY);
+        draw_text(mz_text, 10., 30., 30., BLACK);
+        draw_text(f_of_mz_text, 10., 60., 30., BLACK);
 
 
         next_frame().await;
