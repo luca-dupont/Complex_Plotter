@@ -3,7 +3,7 @@
 ## How to use :
 * Either run `cargo run --release` in the terminal while in the Complex_Plotter directory.
 * Or create an application bundle by running `cargo bundle --release` in the directory and then find the application in `target/release/bundle/osx`
-* Change functions to graph in the code at lines 26
+* Change functions to graph in the code at line 26
 
 ## Controls :
 * \- : Zoom out
