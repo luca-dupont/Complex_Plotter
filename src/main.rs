@@ -3,7 +3,7 @@ use num_complex::Complex;
 use std::f32::consts::PI;
 use rayon::prelude::*;
 
-// ! Change function at line 23
+// ! Change function at line 26 and 33
 
 // Constants
 const ZOOM_FACTOR: f32 = 1.1;
@@ -13,7 +13,6 @@ const MAX_LIGHTNESS: f32 = 0.7;
 const SATURATION: f32 = 1.;
 const START_BOUNDARIES: f32 = 10.;
 const NUM_DIVISIONS : i32 = 4; // Number of divisions on each axis
-
 const TRANSPARENT_GREY: Color = Color{r : 220., g : 220., b : 220., a : 0.2};
 
 fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32) -> f32 {
