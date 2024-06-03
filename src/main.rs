@@ -3,7 +3,7 @@ use num_complex::Complex;
 use std::f32::consts::PI;
 use rayon::prelude::*;
 
-// ! Change function at line 26
+// ! Change function at line 28
 
 // Constants
 const ZOOM_FACTOR: f32 = 1.1;
@@ -26,13 +26,14 @@ fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32)
 }
 
 fn f_of_z(z : Complex<f32>) -> Complex<f32> {
-    // (z * z * z - 100.) / (z.powi(2) + 40.)
+    (z * z * z - 100.) / (z.powi(2) + 40.)
     // ((-1. / 2.) * (z * z)).exp()
     // z / z.cos()
     // z.sin() - 0.5
 
     // ↓↓↓ SLOW Riemann zeta function ↓↓↓ (Tip : If you really want to use it, make the screen small, so it runs at a reasonable speed)
 
+    /*
     let mut fz = Complex::new(0., 0.);
 
     for i in 1..100 {
@@ -44,6 +45,7 @@ fn f_of_z(z : Complex<f32>) -> Complex<f32> {
         }
     }
     fz
+    */
 }
 
 #[macroquad::main("Complex function plotter")]
