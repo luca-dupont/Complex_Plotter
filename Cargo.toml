@@ -11,7 +11,7 @@ description = "Complex function plotter"
 num-complex = "0.4"
 macroquad = "0.4.5"
 cargo-bundle = "0.6.0"
-rayon = "0.10.0"
+rayon = "1.10.0"
 
 [package.metadata.bundle]
 name = "Complex Plotter"
