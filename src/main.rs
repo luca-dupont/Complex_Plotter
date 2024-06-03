@@ -3,7 +3,7 @@ use num_complex::Complex;
 use std::f32::consts::PI;
 use rayon::prelude::*;
 
-// ! Change function at line 26 and 33
+// ! Change function at line 26
 
 // Constants
 const ZOOM_FACTOR: f32 = 1.1;
@@ -28,9 +28,10 @@ fn f_of_z(z : Complex<f32>) -> Complex<f32> {
     // ((-1. / 2.) * (z * z)).exp()
     // z / z.cos()
     // z.sin() - 0.5
-}
 
-fn _riemann_zeta(z : Complex<f32>) -> Complex<f32> {
+    // ↓↓↓ SLOW Riemann zeta function ↓↓↓ (Tip : If you really want to use it, make the screen small, so it runs at a reasonable speed)
+    /*
+
     let mut fz = Complex::new(0., 0.);
 
     // 50 first terms of the sum
@@ -38,7 +39,7 @@ fn _riemann_zeta(z : Complex<f32>) -> Complex<f32> {
         fz += z.expf(i as f32).inv();
     }
 
-    fz
+    fz */
 }
 
 #[macroquad::main("Complex function plotter")]
