@@ -8,12 +8,14 @@ use rayon::prelude::*;
 // Constants
 const ZOOM_FACTOR: f32 = 1.1;
 const SCROLL_FACTOR: f32 = 50.;
+const INF : f32 = f32::INFINITY;
 const K: i32 = 2;
 const MAX_LIGHTNESS: f32 = 0.7;
 const SATURATION: f32 = 1.;
 const START_BOUNDARIES: f32 = 10.;
-const NUM_DIVISIONS : i32 = 4; // Number of divisions on each axis
+const NUM_DIVISIONS : i32 = 4;
 const TRANSPARENT_GREY: Color = Color{r : 220., g : 220., b : 220., a : 0.2};
+const ZERO_THRESHOLD : f32 = 0.1e-30;
 
 fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32) -> f32 {
     // Normalize value to the range [0, 1]
@@ -24,22 +26,24 @@ fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32)
 }
 
 fn f_of_z(z : Complex<f32>) -> Complex<f32> {
-    (z * z * z - 100.) / (z.powi(2) + 40.)
+    // (z * z * z - 100.) / (z.powi(2) + 40.)
     // ((-1. / 2.) * (z * z)).exp()
     // z / z.cos()
     // z.sin() - 0.5
 
     // ↓↓↓ SLOW Riemann zeta function ↓↓↓ (Tip : If you really want to use it, make the screen small, so it runs at a reasonable speed)
-    /*
 
     let mut fz = Complex::new(0., 0.);
 
-    // 50 first terms of the sum
-    for i in 1..50 {
-        fz += z.expf(i as f32).inv();
+    for i in 1..100 {
+        let exp_z = z.expf(i as f32);
+        if exp_z.re.abs() < ZERO_THRESHOLD && exp_z.im.abs() < ZERO_THRESHOLD {
+            return Complex::new((exp_z.re as f32).signum()*INF,(exp_z.im as f32).signum()*INF)
+        } else if exp_z.is_finite() {
+            fz += exp_z.inv();
+        }
     }
-
-    fz */
+    fz
 }
 
 #[macroquad::main("Complex function plotter")]
@@ -104,7 +108,7 @@ async fn main() {
         // Map the pairs from the width and height of screen to the boundaries of the graph and assign them to a complex number
         let complex_x_y_vec : Vec<Complex<f32>> = x_y_vec.clone()
             .into_iter()
-            .map(|(x,y)| Complex::new(map_value(x as f32, 0., w as f32, (-boundary) + x_offset, boundary + x_offset, ),map_value(y as f32, 0., h as f32, (-boundary) + y_offset, boundary + y_offset, )))
+            .map(|(x,y)| Complex::new(map_value(x as f32, 0., w as f32, (-boundary) + x_offset, boundary + x_offset, ),map_value(y as f32, 0., h as f32, boundary - y_offset, -boundary - y_offset, )))
             .collect();
         // Compute the result of the complex function with threads
         let fz: Vec<Complex<f32>> = complex_x_y_vec
@@ -120,9 +124,10 @@ async fn main() {
 
             let norm = z.norm();
 
-            // Map norm to a lightness according to the function |z|^K/(|z|^K+1) (Stereographic projection onto the Riemann Sphere with K = 2)
+            // Map norm to a lightness according to the function ||z||^K/(||z||^K+1) (Stereographic projection onto the Riemann Sphere with K = 2)
             let z_k = norm.powi(K);
-            let lightness = MAX_LIGHTNESS * z_k / (z_k + 1.);
+            // Check if the value will be infinity, if so then make it very light, else let it do the function
+            let lightness = if z_k != INF { MAX_LIGHTNESS * z_k / (z_k + 1.) } else {MAX_LIGHTNESS+0.1};
 
             // Get color according to norm and angle
             let color = hsl_to_rgb(hue, SATURATION, lightness);
@@ -146,8 +151,8 @@ async fn main() {
         );
         let y_axe_pos = map_value(
             0.,
-            (-boundary) + y_offset,
-            boundary + y_offset,
+            boundary - y_offset,
+            -boundary - y_offset,
             0.,
             h as f32,
         );
@@ -157,14 +162,20 @@ async fn main() {
         // Get value at mouse position
         let (mut mx, mut my) = mouse_position();
 
-        mx = map_value(mx, 0., w as f32, -boundary + x_offset, boundary + x_offset);
-        my = map_value(my, 0., h as f32, -boundary + y_offset, boundary + y_offset);
+        // Check if cursor is on screen, else put NaN
+        if (0. ..w as f32).contains(&mx) && (0. ..h as f32).contains(&my) {
+            mx = map_value(mx, 0., w as f32, -boundary + x_offset, boundary + x_offset);
+            my = map_value(my, 0., h as f32, boundary - y_offset, -boundary - y_offset);
+        } else {
+            mx = f32::NAN;
+            my = f32::NAN;
+        }
 
-        let mut z = Complex::new(mx,my);
+        let z = Complex::new(mx,my);
 
-        z = f_of_z(z);
+        let res = f_of_z(z);
 
-        let (re, im) = (z.re, z.im);
+        let (re, im) = (res.re, res.im);
 
         // Output z and f(z) on the screen at mouse position
         let z_text = &format!("z = {mx:.3} + {my:.3}i");
@@ -184,7 +195,7 @@ async fn main() {
 
             // Draw labels
             let x_value = map_value(x, 0., w as f32, -boundary + x_offset, boundary + x_offset);
-            let y_value = map_value(y, 0., h as f32, -boundary + y_offset, boundary + y_offset);
+            let y_value = map_value(y, 0., h as f32, boundary - y_offset, -boundary - y_offset);
 
             draw_text(&format!("{:.1}", x_value), x-8., y_axe_pos - 10., 20., BLACK);
             draw_line(x, y_axe_pos - 5., x, y_axe_pos + 5., 2., BLACK);
