@@ -1,6 +1,5 @@
 # Complex function plotter
 > Plot and experiment with functions of complex numbers!
-![517x517](https://github.com/luca-dupont/Complex_Plotter/assets/67842853/b6a6380b-1d3b-49ce-a36e-5dd0ca8c13a4)
 
 ## Usage :
 * First install cargo (mentioned in [requirements](#Requirements) below).
