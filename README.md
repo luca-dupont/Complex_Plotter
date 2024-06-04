@@ -16,7 +16,7 @@
 * ↓ : Scroll down 
 
 ## Requirements
-The following installs are required for this script to work.
+The following installs are required for this app to work.
 - Cargo
 
 To install this :
