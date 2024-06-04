@@ -3,7 +3,7 @@ use num_complex::Complex;
 use std::f32::consts::PI;
 use rayon::prelude::*;
 
-// ! Change function at line 28
+// ! Change function at line 30
 
 // Constants
 const ZOOM_FACTOR: f32 = 1.1;
@@ -17,6 +17,7 @@ const NUM_DIVISIONS : i32 = 4;
 const TRANSPARENT_GREY: Color = Color{r : 220., g : 220., b : 220., a : 0.2};
 const ZERO_THRESHOLD : f32 = 0.1e-30;
 
+// Map value from one range to another function that will be used a lot
 fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32) -> f32 {
     // Normalize value to the range [0, 1]
     let normalized_value = (value - from_min) / (from_max - from_min);
@@ -25,7 +26,8 @@ fn map_value(value: f32, from_min: f32, from_max: f32, to_min: f32, to_max: f32)
     normalized_value * (to_max - to_min) + to_min
 }
 
-fn f_of_z(z : Complex<f32>) -> Complex<f32> {
+// Function that will be applied to the complex plane
+fn f(z : Complex<f32>) -> Complex<f32> {
     (z * z * z - 100.) / (z.powi(2) + 40.)
     // ((-1. / 2.) * (z * z)).exp()
     // z / z.cos()
@@ -34,17 +36,17 @@ fn f_of_z(z : Complex<f32>) -> Complex<f32> {
     // ↓↓↓ SLOW Riemann zeta function ↓↓↓ (Tip : If you really want to use it, make the screen small, so it runs at a reasonable speed)
 
     /*
-    let mut fz = Complex::new(0., 0.);
+    let mut res = Complex::new(0., 0.);
 
     for i in 1..100 {
         let exp_z = z.expf(i as f32);
         if exp_z.re.abs() < ZERO_THRESHOLD && exp_z.im.abs() < ZERO_THRESHOLD {
             return Complex::new((exp_z.re as f32).signum()*INF,(exp_z.im as f32).signum()*INF)
         } else if exp_z.is_finite() {
-            fz += exp_z.inv();
+            res += exp_z.inv();
         }
     }
-    fz
+    res
     */
 }
 
@@ -113,13 +115,13 @@ async fn main() {
             .map(|(x,y)| Complex::new(map_value(x as f32, 0., w as f32, (-boundary) + x_offset, boundary + x_offset, ),map_value(y as f32, 0., h as f32, boundary - y_offset, -boundary - y_offset, )))
             .collect();
         // Compute the result of the complex function with threads
-        let fz: Vec<Complex<f32>> = complex_x_y_vec
+        let res: Vec<Complex<f32>> = complex_x_y_vec
             .par_iter()
-            .map(|&z| f_of_z(z))
+            .map(|&z| f(z))
             .collect();
 
         // Loop through each point on the screen and it's complex result
-        for ((x,y),z) in x_y_vec.into_iter().zip(fz.into_iter()) {
+        for ((x,y),z) in x_y_vec.into_iter().zip(res.into_iter()) {
 
             // Map angle from radians to [0,1]
             let hue = map_value(z.arg(), -PI, PI, 0., 1.);
@@ -175,7 +177,7 @@ async fn main() {
 
         let z = Complex::new(mx,my);
 
-        let res = f_of_z(z);
+        let res = f(z);
 
         let (re, im) = (res.re, res.im);
 
