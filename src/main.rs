@@ -41,7 +41,7 @@ fn f(z : Complex<f32>) -> Complex<f32> {
     for i in 1..100 {
         let exp_z = z.expf(i as f32);
         if exp_z.re.abs() < ZERO_THRESHOLD && exp_z.im.abs() < ZERO_THRESHOLD {
-            return Complex::new((exp_z.re as f32).signum()*INF,(exp_z.im as f32).signum()*INF)
+            return Complex::new(exp_z.re.signum()*INF,exp_z.im.signum()*INF)
         } else if exp_z.is_finite() {
             res += exp_z.inv();
         }
