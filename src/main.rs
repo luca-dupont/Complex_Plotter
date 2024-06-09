@@ -1,3 +1,4 @@
+#![allow(unused)]
 use macroquad::{color::hsl_to_rgb, miniquad::window::screen_size, prelude::*};
 use num_complex::Complex;
 use std::f32::consts::PI;
