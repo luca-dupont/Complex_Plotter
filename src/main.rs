@@ -35,7 +35,6 @@ fn f(z : Complex<f32>) -> Complex<f32> {
     // z.sin() - 0.5
 
     // ↓↓↓ SLOW Riemann zeta function ↓↓↓ (Tip : If you really want to use it, make the screen small, so it runs at a reasonable speed)
-
     /*
     let mut res = Complex::new(0., 0.);
 
@@ -48,7 +47,24 @@ fn f(z : Complex<f32>) -> Complex<f32> {
         }
     }
     res
-    */
+*/
+}
+
+// Map a point value to a color
+fn val_to_color(z : Complex<f32>) -> Color {
+    let hue = map_value(z.arg(), -PI, PI, 0., 1.); // Map angle to hue
+
+    let norm = z.norm();
+
+    // Map norm to a lightness according to the function ||z||^K/(||z||^K+1) (Stereographic projection onto the Riemann Sphere with K = 2)
+    let z_k = norm.powi(K);
+    // Check if the value will be infinity, if so then make it very light, else let it do the function
+    let lightness = if z_k != INF { MAX_LIGHTNESS * z_k / (z_k + 1.) } else {MAX_LIGHTNESS+0.1};
+
+    // Get color according to norm and angle
+    let color = hsl_to_rgb(hue, SATURATION, lightness);
+
+    color
 }
 
 #[macroquad::main("Complex function plotter")]
@@ -112,31 +128,18 @@ async fn main() {
             .collect();
         // Map the pairs from the width and height of screen to the boundaries of the graph and assign them to a complex number
         let complex_x_y_vec : Vec<Complex<f32>> = x_y_vec.clone()
-            .into_iter()
+            .into_par_iter()
             .map(|(x,y)| Complex::new(map_value(x as f32, 0., w as f32, (-boundary) + x_offset, boundary + x_offset, ),map_value(y as f32, 0., h as f32, boundary - y_offset, -boundary - y_offset, )))
             .collect();
-        // Compute the result of the complex function with threads
-        let res: Vec<Complex<f32>> = complex_x_y_vec
+        // Compute the result of the complex function with threads then map it to a color
+        let colors: Vec<Color> = complex_x_y_vec
             .par_iter()
-            .map(|&z| f(z))
+            .map(|&z| f(z)) // Compute f(z) (result)
+            .map(|z| val_to_color(z))// Compute the color of each point
             .collect();
 
-        // Loop through each point on the screen and it's complex result
-        for ((x,y),z) in x_y_vec.into_iter().zip(res.into_iter()) {
-
-            // Map angle from radians to [0,1]
-            let hue = map_value(z.arg(), -PI, PI, 0., 1.);
-
-            let norm = z.norm();
-
-            // Map norm to a lightness according to the function ||z||^K/(||z||^K+1) (Stereographic projection onto the Riemann Sphere with K = 2)
-            let z_k = norm.powi(K);
-            // Check if the value will be infinity, if so then make it very light, else let it do the function
-            let lightness = if z_k != INF { MAX_LIGHTNESS * z_k / (z_k + 1.) } else {MAX_LIGHTNESS+0.1};
-
-            // Get color according to norm and angle
-            let color = hsl_to_rgb(hue, SATURATION, lightness);
-
+        // Loop through each point and color it
+        for ((x,y),color) in x_y_vec.into_iter().zip(colors.into_iter()) {
             // Set according color
             image.set_pixel(x, y, color);
         }
