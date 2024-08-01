@@ -62,9 +62,7 @@ fn val_to_color(z : Complex<f32>) -> Color {
     let lightness = if z_k != INF { MAX_LIGHTNESS * z_k / (z_k + 1.) } else {MAX_LIGHTNESS+0.1};
 
     // Get color according to norm and angle
-    let color = hsl_to_rgb(hue, SATURATION, lightness);
-
-    color
+    hsl_to_rgb(hue, SATURATION, lightness)
 }
 
 #[macroquad::main("Complex function plotter")]
@@ -135,7 +133,7 @@ async fn main() {
         let colors: Vec<Color> = complex_x_y_vec
             .par_iter()
             .map(|&z| f(z)) // Compute f(z) (result)
-            .map(|z| val_to_color(z))// Compute the color of each point
+            .map(val_to_color)// Compute the color of each point
             .collect();
 
         // Loop through each point and color it
