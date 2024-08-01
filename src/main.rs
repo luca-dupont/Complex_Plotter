@@ -124,15 +124,12 @@ async fn main() {
         let x_y_vec : Vec<(u32, u32)> = (0..w as u32)
             .flat_map(|x| (0..h as u32).map(move |y| (x, y)))
             .collect();
-        // Map the pairs from the width and height of screen to the boundaries of the graph and assign them to a complex number
-        let complex_x_y_vec : Vec<Complex<f32>> = x_y_vec.clone()
-            .into_par_iter()
-            .map(|(x,y)| Complex::new(map_value(x as f32, 0., w as f32, (-boundary) + x_offset, boundary + x_offset, ),map_value(y as f32, 0., h as f32, boundary - y_offset, -boundary - y_offset, )))
-            .collect();
-        // Compute the result of the complex function with threads then map it to a color
-        let colors: Vec<Color> = complex_x_y_vec
-            .par_iter()
-            .map(|&z| f(z)) // Compute f(z) (result)
+
+        // Map the pairs to the complex plane, them compute the result of the complex function with threads then map it to a color
+        let colors: Vec<Color> = x_y_vec.clone()
+            .into_par_iter() // Transform to parallel iterator
+            .map(|(x,y)| Complex::new(map_value(x as f32, 0., w as f32, (-boundary) + x_offset, boundary + x_offset, ),map_value(y as f32, 0., h as f32, boundary - y_offset, -boundary - y_offset, ))) // Map to complex plane
+            .map(f) // Compute f(z) (result)
             .map(val_to_color)// Compute the color of each point
             .collect();
 
